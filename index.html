@@ -7,7 +7,7 @@
 <title>Checador Minisers - T0151</title>
 <link rel="icon" type="image/svg+xml" href="./src/icons/checador.svg">
 <link rel="manifest" href="./manifest.json">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://mifbcyxtafeacwkzqzsq.supabase.co; connect-src 'self' https://mifbcyxtafeacwkzqzsq.supabase.co wss://mifbcyxtafeacwkzqzsq.supabase.co; worker-src 'self' blob:; base-uri 'self'; form-action 'self'; object-src 'none';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://mifbcyxtafeacwkzqzsq.supabase.co; connect-src 'self' https://mifbcyxtafeacwkzqzsq.supabase.co wss://mifbcyxtafeacwkzqzsq.supabase.co https://cdn.jsdelivr.net https://unpkg.com https://tessdata.projectnaptha.com; worker-src 'self' blob: https://cdn.jsdelivr.net; base-uri 'self'; form-action 'self'; object-src 'none';">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="theme-color" content="#F8F9FA">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1795,21 +1795,35 @@ loaderText.textContent = source === 'gallery'
 : "Comprimiendo imagen...";
 imageBlob = await resizeImage(preparedFile, 1280, source);
 if (navigator.onLine && typeof Tesseract !== 'undefined') {
-loaderText.textContent = "Analizando con OCR...";
-try {
-const base64Data = await blobToDataUrl(imageBlob);
-worker = await Tesseract.createWorker('spa');
-const ret = await worker.recognize(base64Data);
-const extractedText = ret.data.text;
-const nameMatch = extractedText.match(/(\d+)-([A-Za-z\sáéíóúÁÉÍÓÚñÑ]+)/i);
-if (nameMatch) detectedName = nameMatch[2].trim();
-const dateMatch = extractedText.match(/(\d{2}\/\d{2}\/\d{4})\s(\d{2}:\d{2}:\d{2})/);
-if (dateMatch) detectedDate = dateMatch[0];
-} catch (ocrError) {
-console.warn("OCR no pudo interpretar el texto:", ocrError);
-} finally {
-if (worker) await worker.terminate();
-}
+    loaderText.textContent = "Analizando con OCR...";
+    try {
+        const base64Data = await blobToDataUrl(imageBlob);
+        
+        // Envolvemos la inicialización y lectura en una promesa con timeout
+        const ocrPromise = (async () => {
+            worker = await Tesseract.createWorker('spa');
+            return await worker.recognize(base64Data);
+        })();
+
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Tiempo de espera OCR agotado')), 15000)
+        );
+
+        const ret = await Promise.race([ocrPromise, timeoutPromise]);
+        
+        const extractedText = ret.data.text;
+        const nameMatch = extractedText.match(/(\d+)-([A-Za-z\sáéíóúÁÉÍÓÚñÑ]+)/i);
+        if (nameMatch) detectedName = nameMatch[2].trim();
+        const dateMatch = extractedText.match(/(\d{2}\/\d{2}\/\d{4})\s(\d{2}:\d{2}:\d{2})/);
+        if (dateMatch) detectedDate = dateMatch[0];
+    } catch (ocrError) {
+        console.warn("OCR no pudo interpretar el texto o tardó demasiado:", ocrError);
+        // Aquí no detenemos la app, simplemente continúa sin los datos del OCR
+    } finally {
+        if (worker) {
+            try { await worker.terminate(); } catch (e) {}
+        }
+    }
 }
 loaderText.textContent = navigator.onLine ? "Guardando registro..." : "Guardando sin conexión...";
 await saveRecord(imageBlob, detectedName, detectedDate, source);

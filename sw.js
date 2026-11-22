@@ -1,5 +1,5 @@
-const CACHE_STATIC = "checador-miniser-t0151-static-v1.1.2";
-const CACHE_RUNTIME = "checador-minisers-t0151-runtime-v1.1.2";
+const CACHE_STATIC = "checador-miniser-t0151-static-v1.1.3";
+const CACHE_RUNTIME = "checador-minisers-t0151-runtime-v1.1.3";
 
 // Recursos locales esenciales (relativos a la ubicación de sw.js)
 const STATIC_ASSETS = [
