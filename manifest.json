@@ -1,17 +1,26 @@
 {
-  "short_name": "Consultor de Fases",
-  "name": "Consultor de Fases - JF ",
-  "icons": [
+  "name": "Checador Minisers - T0151",
+  "short_name": "Checador T0151",
+  "description": "Checador Minisers para Gran Plaza Mérida T0151 by Fz Lab.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F8F9FA",
+  "theme_color": "#F8F9FA",
+  "lang": "es-MX",
+  "icons": [    
     {
-      "src": "consultorjf.png",
+      "src": "./src/icons/checador512.png",
+      "sizes": "512x512",
       "type": "image/png",
-      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./src/icons/checador192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any maskable"
     }
-  ],
-  "start_url": "./index.html",
-  "background_color": "#ffffff",
-  "theme_color": "#1f2937",
-  "display": "standalone",
-  "orientation": "portrait"
+  ]
 }
